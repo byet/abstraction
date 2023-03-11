@@ -29,3 +29,18 @@ Generally
 1. Arcs added from parent's parent are causal
 2. Arcs added from children's parent are non-causal
 3. If parent's parents are due to previously reversed arcs they are non-causal
+
+
+---
+
+## Reversing and keeping track of arcs
+
+- You can add due to which node removal operation each node is added. 
+- You can reverse an operation by considering the Markov Blanket (MB) of the removed node and removing added edges due to removal, and adding the original edges.
+- An interesting question is whether if I remova A and B in this order, can I put A back in without putting B?
+
+The algorithm would be like try to put back MB and remove edges due to removing this node. If all MB is not present, keep the edges of missing places due to MB in. 
+
+Should I think in terms of node arc reversal or node removal?
+
+For this you have to keep track of all assumptions starting from the initial model... E.g. if you there is a causal relation at th ebeginning and if you added causal arcs at each abstraction, you have to keep track of them...
