@@ -19,6 +19,7 @@ class Abstraction:
         children = dag.successors(node)
         reverse_orders = permutations(children)
         best_score = float("inf")
+        best_order = []
         G = Dag()
         for order in reverse_orders:
             graph = dag.copy()
@@ -27,7 +28,8 @@ class Abstraction:
             if score < best_score:
                 G = graph.copy()
                 best_score = score
-        return G, best_score
+                best_order = order
+        return G, best_order, best_score
 
     def minimal_remove_nodes(self, dag, nodes):
         """Removes a set of nodes node by introducing minimal number of additional arcs.
@@ -37,11 +39,12 @@ class Abstraction:
             nodes (list): list of node names to be removed.
 
         Returns:
-            Dag, int, int: Abstracted dag object, maximum number of parents in the dag, the total number of parents in the dag
+            Dag, order int, int: Abstracted dag object, list of removed nodes, maximum number of parents in the dag, the total number of parents in the dag
         """
         remove_orders = permutations(nodes)
         best_score1 = float("inf")
         best_score2 = float("inf")
+        best_order = []
         G = Dag()
         for order in remove_orders:
             graph = dag.copy()
@@ -54,7 +57,9 @@ class Abstraction:
             if score1 < best_score1:
                 G = graph.copy()
                 best_score1 = score1
+                best_order = order
             elif score2 < best_score2:
                 G = graph.copy()
                 best_score2 = score2
-        return G, best_score1, best_score2
+                best_order = order
+        return G, best_order, best_score1, best_score2

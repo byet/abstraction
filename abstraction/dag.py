@@ -4,6 +4,14 @@ from itertools import permutations
 
 class Dag(nx.DiGraph):
     """Extended networkx DAG class that contains abstarction operations."""
+    
+    def __init__(self, incoming_graph_data=None, all_causal=True, **attr):
+        super().__init__(incoming_graph_data, **attr)
+        if all_causal:
+            for parent, child in self.edges:
+                self[parent][child]['causal'] = True
+            
+    
 
     def reversible(self, parent, child):
         """Checks if an arc is reversible without introducing a dag
@@ -27,21 +35,38 @@ class Dag(nx.DiGraph):
         Returns:
             (str, str): list of added edges to parent, list of added edges to child in reversal operations
         """
-        self.remove_edge(parent, child)
-        parent_added_edges = 0
-        child_added_edges = 0
+        edge_attributes = self[parent][child]
+        added_edges = []
+        num_parent_added_edges = 0
+        num_child_added_edges = 0
+        # Determine edges to add from parents
+        
         for node in self.predecessors(parent):
+            new_edge_attributes = {}
+            
+            parent_edge_attributes = self[node][parent]
+            if parent_edge_attributes.get('causal') and edge_attributes.get('causal'):
+               new_edge_attributes['causal'] = True
+            if parent_edge_attributes.get('non_causal') or edge_attributes.get('non_causal'):
+               new_edge_attributes['non_causal'] = True
             if not self.has_edge(node, child):
-                parent_added_edges += 1
-                self.add_edge(node, child)
+                num_parent_added_edges += 1
+            added_edges.append((node, child, new_edge_attributes))
+
+        # Determine edges to add from children
         for node in self.predecessors(child):
             if not self.has_edge(node, parent):
-                child_added_edges += 1
-                self.add_edge(node, parent)
-        self.add_edge(child, parent)
+                num_child_added_edges += 1
+            added_edges.append((node, parent, {'non_causal': True}))
+        
+        # Update the graph
+        self.remove_edge(parent, child)
+        self.add_edges_from(added_edges)
+        self.add_edge(child, parent, non_causal=True)
+        
         if not nx.is_directed_acyclic_graph(self):
             Exception(f"Reversing {parent}->{child} leads to a cycle")
-        return parent_added_edges, child_added_edges
+        return num_parent_added_edges, num_child_added_edges
 
     def erase_node(self, node, reverse_order=()):
         """Removes node by keeding conditional independencies of the other nodes compatible
